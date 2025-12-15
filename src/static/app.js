@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const spotsLeft = details.max_participants - details.participants.length;
 
         const participantsList = details.participants.length > 0
-          ? details.participants.map(p => `<li>${p}</li>`).join("")
+          ? details.participants.map(p => `<li class="participant-item" data-email="${p}" data-activity="${name}">${p} <button class="delete-btn" type="button" title="Remove participant">×</button></li>`).join("")
           : "<li><em>No participants yet</em></li>";
 
         activityCard.innerHTML = `
@@ -36,6 +36,35 @@ document.addEventListener("DOMContentLoaded", () => {
             </ul>
           </div>
         `;
+
+        // Add delete button event listeners
+        const deleteButtons = activityCard.querySelectorAll(".delete-btn");
+        deleteButtons.forEach(btn => {
+          btn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const email = btn.closest(".participant-item").dataset.email;
+            const activity = btn.closest(".participant-item").dataset.activity;
+            
+            try {
+              const response = await fetch(
+                `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+                {
+                  method: "DELETE",
+                }
+              );
+              
+              if (response.ok) {
+                fetchActivities(); // Refresh the list
+              } else {
+                const result = await response.json();
+                alert(result.detail || "Failed to remove participant");
+              }
+            } catch (error) {
+              console.error("Error removing participant:", error);
+              alert("Failed to remove participant");
+            }
+          });
+        });
 
         activitiesList.appendChild(activityCard);
 
